@@ -4,11 +4,18 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(clip_ggml_library VERSION 0.0.1 LANGUAGES C CXX)
-
+set(CMAKE_CXX_STANDARD 20)
 add_library(clip_ggml SHARED
   "clip_ggml.cpp"
 )
+
+set_target_properties(clip_ggml PROPERTIES
+  PUBLIC_HEADER clip.cpp/clip.h 
+  OUTPUT_NAME "clip"
+)
+
 add_library(clip clip.cpp/clip.cpp)
+add_library(ggml clip.cpp/ggml/src/ggml.c)
 
 target_compile_definitions(clip_ggml PUBLIC DART_SHARED_LIB)
-target_link_libraries(clip_ggml PRIVATE clip ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(clip_ggml PRIVATE clip ggml ${CMAKE_THREAD_LIBS_INIT})
