@@ -11,7 +11,7 @@ add_library(clip_ggml SHARED
 
 set_target_properties(clip_ggml PROPERTIES
   PUBLIC_HEADER clip.cpp/clip.h 
-  OUTPUT_NAME "clip"
+  OUTPUT_NAME "clip_ggml"
 )
 
 add_library(clip clip.cpp/clip.cpp)
