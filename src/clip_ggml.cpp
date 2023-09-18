@@ -10,9 +10,9 @@ extern "C"
     // return result;
     ggml_time_init();
     const int64_t t_main_start_us = ggml_time_us();
-    std:string time = to_string(t_main_start_us);
-    char *result = new char[sample.size() + 1];
-    strcpy(result, sample.c_str());
+    std::string time = std::to_string(t_main_start_us);
+    char *result = new char[time.size() + 1];
+    strcpy(result, time.c_str());
     return result;
   }
 
