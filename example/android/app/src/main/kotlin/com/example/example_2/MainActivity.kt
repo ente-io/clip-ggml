@@ -1,4 +1,4 @@
-package com.example.clip_ggml_example
+package com.example.example
 
 import io.flutter.embedding.android.FlutterActivity
 
