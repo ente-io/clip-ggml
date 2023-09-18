@@ -8,6 +8,7 @@ project(clip_ggml_library VERSION 0.0.1 LANGUAGES C CXX)
 add_library(clip_ggml SHARED
   "clip_ggml.cpp"
 )
+add_library(clip clip.cpp/clip.cpp)
 
 target_compile_definitions(clip_ggml PUBLIC DART_SHARED_LIB)
-# Add target link libraries later
+target_link_libraries(clip_ggml PRIVATE clip ${CMAKE_THREAD_LIBS_INIT})
