@@ -9,10 +9,5 @@ add_library(clip_ggml SHARED
   "clip_ggml.cpp"
 )
 
-set_target_properties(clip_ggml PROPERTIES
-  PUBLIC_HEADER clip_ggml.h
-  OUTPUT_NAME "clip_ggml"
-)
-
 target_compile_definitions(clip_ggml PUBLIC DART_SHARED_LIB)
 # Add target link libraries later
