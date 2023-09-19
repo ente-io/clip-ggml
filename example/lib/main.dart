@@ -1,19 +1,40 @@
+import 'dart:io';
+
 import 'package:clip_ggml/clip_ggml.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() {
-  Clip_GGML clip = Clip_GGML();
-  String result = clip.native_request(inputString: "test123");
-  print(result);
   runApp(const MyApp());
+}
+
+Future<String> getAccessiblePathForAsset(String assetPath) async {
+  final byteData = await rootBundle.load(assetPath);
+  final tempDir = await getTemporaryDirectory();
+  final file = await File('${tempDir.path}/temp_asset')
+      .writeAsBytes(byteData.buffer.asUint8List());
+  return file.path;
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   // This widget is the root of your application.
+
+  void loadModel() {
+    Clip_GGML clip = Clip_GGML();
+    const modelPath =
+        "assets/models/openai_clip-vit-base-patch32.ggmlv0.f16.bin";
+
+    getAccessiblePathForAsset(modelPath).then((path) {
+      String result = clip.native_request(inputString: path);
+      print(result);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    loadModel();
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
