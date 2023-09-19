@@ -9,10 +9,11 @@ void main() {
   runApp(const MyApp());
 }
 
-Future<String> getAccessiblePathForAsset(String assetPath) async {
+Future<String> getAccessiblePathForAsset(
+    String assetPath, String tempName) async {
   final byteData = await rootBundle.load(assetPath);
   final tempDir = await getTemporaryDirectory();
-  final file = await File('${tempDir.path}/temp_asset')
+  final file = await File('${tempDir.path}/$tempName')
       .writeAsBytes(byteData.buffer.asUint8List());
   return file.path;
 }
@@ -22,14 +23,46 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
 
   void loadModel() {
-    Clip_GGML clip = Clip_GGML();
+    final clip = CLIP();
     const modelPath =
         "assets/models/openai_clip-vit-base-patch32.ggmlv0.f16.bin";
 
-    getAccessiblePathForAsset(modelPath).then((path) {
-      String result = clip.native_request(inputString: path);
-      print(result);
+    getAccessiblePathForAsset(modelPath, "model.bin").then((path) async {
+      final startTime = DateTime.now();
+      clip.loadModel(path);
+      final endTime = DateTime.now();
+      final imagePath = await getAccessiblePathForAsset(
+        "assets/cycle.jpg",
+        "cycle.jpg",
+      );
+      print("Loading model took: " +
+          (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
+              .toString() +
+          "ms");
+      await runInference(clip, imagePath, "cycle");
+      await runInference(clip, imagePath, "red car");
+      await runInference(clip, imagePath, "beach");
+      await runInference(clip, imagePath, "grey cycle");
+      await runInference(clip, imagePath, "beach");
+      await runInference(clip, imagePath, "rockrider");
     });
+  }
+
+  Future<void> runInference(
+      CLIP clip, String imagePath, String textQuery) async {
+    final startTime = DateTime.now();
+    String result = clip.runInference(
+      imagePath: imagePath,
+      text: textQuery,
+    );
+    final endTime = DateTime.now();
+    print(textQuery +
+        ": " +
+        result +
+        " (" +
+        (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
+            .toString() +
+        "ms)");
   }
 
   @override
