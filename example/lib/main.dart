@@ -28,9 +28,9 @@ class MyApp extends StatelessWidget {
         "assets/models/openai_clip-vit-base-patch32.ggmlv0.f16.bin";
 
     getAccessiblePathForAsset(modelPath, "model.bin").then((path) async {
-      final startTime = DateTime.now();
+      var startTime = DateTime.now();
       clip.loadModel(path);
-      final endTime = DateTime.now();
+      var endTime = DateTime.now();
       final imagePath = await getAccessiblePathForAsset(
         "assets/cycle.jpg",
         "cycle.jpg",
@@ -39,22 +39,27 @@ class MyApp extends StatelessWidget {
           (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
               .toString() +
           "ms");
-      await runInference(clip, imagePath, "cycle");
-      await runInference(clip, imagePath, "red car");
-      await runInference(clip, imagePath, "beach");
-      await runInference(clip, imagePath, "grey cycle");
-      await runInference(clip, imagePath, "beach");
-      await runInference(clip, imagePath, "rockrider");
+
+      startTime = DateTime.now();
+      clip.createImageEmbedding(imagePath);
+      endTime = DateTime.now();
+      print("Creating image embedding took: " +
+          (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
+              .toString() +
+          "ms");
+
+      await runInference(clip, "cycle");
+      await runInference(clip, "red car");
+      await runInference(clip, "beach");
+      await runInference(clip, "grey cycle");
+      await runInference(clip, "beach");
+      await runInference(clip, "rockrider");
     });
   }
 
-  Future<void> runInference(
-      CLIP clip, String imagePath, String textQuery) async {
+  Future<void> runInference(CLIP clip, String textQuery) async {
     final startTime = DateTime.now();
-    String result = clip.runInference(
-      imagePath: imagePath,
-      text: textQuery,
-    );
+    String result = clip.runInference(textQuery);
     final endTime = DateTime.now();
     print(textQuery +
         ": " +

@@ -2,11 +2,13 @@ import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'package:ffi/ffi.dart';
 
-typedef inference_request = ffi.Pointer<Utf8> Function(
-    ffi.Pointer<Utf8> image_path, ffi.Pointer<Utf8> text);
-
 typedef load_model_request = ffi.Pointer<Utf8> Function(
     ffi.Pointer<Utf8> model_path);
+
+typedef create_image_embedding_request = ffi.Pointer<Utf8> Function(
+    ffi.Pointer<Utf8> image_path);
+
+typedef inference_request = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> text);
 
 class CLIP {
   final String clipLib = "libclip_ggml.so";
@@ -27,15 +29,20 @@ class CLIP {
     return res.toDartString();
   }
 
-  String runInference({
-    required String imagePath,
-    required String text,
-  }) {
+  String createImageEmbedding(String imagePath) {
     ffi.Pointer<Utf8> image_string = imagePath.toNativeUtf8();
+    var res = openLib()
+        .lookupFunction<create_image_embedding_request,
+            create_image_embedding_request>("create_image_embedding")
+        .call(image_string);
+    return res.toDartString();
+  }
+
+  String runInference(String text) {
     ffi.Pointer<Utf8> text_string = text.toNativeUtf8();
     var res = openLib()
         .lookupFunction<inference_request, inference_request>("run_inference")
-        .call(image_string, text_string);
+        .call(text_string);
     return res.toDartString();
   }
 }

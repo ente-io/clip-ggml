@@ -24,6 +24,7 @@ char *str_to_charp(std::string s)
 extern "C"
 {
   struct clip_ctx *ctx;
+  float cached_img_vec[512];
 
   char *load_model(char *model_path)
   {
@@ -36,7 +37,7 @@ extern "C"
     return str_to_charp("ok");
   }
 
-  char *run_inference(char *dart_image_path, char *dart_text)
+  char *create_image_embedding(char *dart_image_path)
   {
     if (!ctx)
     {
@@ -66,6 +67,23 @@ extern "C"
       return image_encode_failure;
     }
 
+    for (int i = 0; i < sizeof(img_vec) / sizeof(img_vec[0]); i++)
+    {
+      cached_img_vec[i] = img_vec[i];
+    }
+
+    return str_to_charp("ok");
+  }
+
+  char *run_inference(char *dart_text)
+  {
+    if (!ctx)
+    {
+      std::string error_message = "Model not loaded";
+      return str_to_charp(error_message);
+    }
+
+    int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
     struct clip_tokens tokens = clip_tokenize(ctx, dart_text);
 
     float txt_vec[vec_dim];
@@ -75,7 +93,7 @@ extern "C"
       return text_encode_failure;
     }
 
-    float score = clip_similarity_score(img_vec, txt_vec, vec_dim);
+    float score = clip_similarity_score(cached_img_vec, txt_vec, vec_dim);
     printf("Similarity score = %2.3f\n", score);
     return str_to_charp(std::to_string(score));
   }
