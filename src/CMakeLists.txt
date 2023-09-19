@@ -19,3 +19,6 @@ add_library(ggml clip.cpp/ggml/src/ggml.c)
 
 target_compile_definitions(clip_ggml PUBLIC DART_SHARED_LIB)
 target_link_libraries(clip_ggml PRIVATE clip ggml ${CMAKE_THREAD_LIBS_INIT})
+
+add_executable(ggmlclip "clip_ggml.cpp")
+target_link_libraries(ggmlclip PRIVATE clip ggml)
