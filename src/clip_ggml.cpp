@@ -96,6 +96,36 @@ extern "C"
     return jsonToChar(result);
   }
 
+  char *create_text_embedding(char *dart_text)
+  {
+    json result;
+    if (!ctx)
+    {
+      std::string error_message = "Model not loaded";
+      return str_to_charp(error_message);
+    }
+
+    int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
+    struct clip_tokens tokens = clip_tokenize(ctx, dart_text);
+
+    float txt_vec[vec_dim];
+    if (!clip_text_encode(ctx, 4, &tokens, txt_vec, true))
+    {
+      fprintf(stderr, "%s: failed to encode text\n", __func__);
+      return text_encode_failure;
+    }
+
+    // Creating result JSON
+    result["vec_dim"] = std::to_string(vec_dim);
+    std::string embedding_string = "";
+    for (int i = 0; i < vec_dim; i++) {
+      embedding_string += std::to_string(txt_vec[i]) + "_";
+    }
+    result["embedding"] = embedding_string;
+
+    return jsonToChar(result);
+  }
+
   char *run_inference(char *dart_text)
   {
     if (!ctx)

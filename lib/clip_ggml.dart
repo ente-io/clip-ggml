@@ -8,6 +8,9 @@ typedef load_model_request = ffi.Pointer<Utf8> Function(
 typedef create_image_embedding_request = ffi.Pointer<Utf8> Function(
     ffi.Pointer<Utf8> image_path);
 
+typedef create_text_embedding_request = ffi.Pointer<Utf8> Function(
+    ffi.Pointer<Utf8> text);
+
 typedef inference_request = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> text);
 
 class CLIP {
@@ -35,6 +38,15 @@ class CLIP {
         .lookupFunction<create_image_embedding_request,
             create_image_embedding_request>("create_image_embedding")
         .call(image_string);
+    return res.toDartString();
+  }
+
+  String createTextEmbedding(String text) {
+    ffi.Pointer<Utf8> text_string = text.toNativeUtf8();
+    var res = openLib()
+        .lookupFunction<create_text_embedding_request,
+            create_text_embedding_request>("create_text_embedding")
+        .call(text);
     return res.toDartString();
   }
 
