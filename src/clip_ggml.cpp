@@ -176,6 +176,11 @@ extern "C"
     return str_to_charp(std::to_string(clip_similarity_score(image_embedding_array, text_embedding_array, vec_dim)));
   }
 
+  char *test_json(char *body) {
+    json jsonBody = json::parse(body);
+    return str_to_charp(std::to_string(jsonBody["embedding"][0]));
+  }
+
   char *run_inference(char *dart_text)
   {
     if (!ctx)

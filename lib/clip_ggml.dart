@@ -11,6 +11,8 @@ typedef create_image_embedding_request = ffi.Pointer<Utf8> Function(
 typedef create_text_embedding_request = ffi.Pointer<Utf8> Function(
     ffi.Pointer<Utf8> text);
 
+typedef test_json_request = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> text);
+
 typedef inference_request = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> text);
 
 class CLIP {
@@ -55,6 +57,14 @@ class CLIP {
     var res = openLib()
         .lookupFunction<inference_request, inference_request>("run_inference")
         .call(text_string);
+    return res.toDartString();
+  }
+
+  String testJSON(String json) {
+    ffi.Pointer<Utf8> json_string = json.toNativeUtf8();
+    var res = openLIb()
+        .lookupFunction<test_json_request, test_json_request>("test_json")
+        .call(json);
     return res.toDartString();
   }
 }
