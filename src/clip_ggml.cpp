@@ -178,8 +178,8 @@ extern "C"
 
   char *test_json(char *body) {
     json jsonBody = json::parse(body);
-    float a = jsonBody["embedding"][0];
-    return str_to_charp(std::to_string(a));
+    std::string a = jsonBody["embedding"];
+    return str_to_charp(a);
   }
 
   char *run_inference(char *dart_text)
