@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:clip_ggml/clip_ggml.dart';
@@ -36,7 +37,8 @@ class MyApp extends StatelessWidget {
             .toString() +
         "ms");
 
-    runModel(clip);
+    // runModel(clip);
+    testJson(clip);
   }
 
   Future<void> runModel(CLIP clip) async {
@@ -63,10 +65,25 @@ class MyApp extends StatelessWidget {
 
   Future<void> runInference(CLIP clip, String textQuery) async {
     final startTime = DateTime.now();
-    String result = clip.runInference(textQuery);
+    String result = clip.testJSON(textQuery);
     final endTime = DateTime.now();
     print(textQuery +
         ": " +
+        result +
+        " (" +
+        (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
+            .toString() +
+        "ms)");
+  }
+
+  Future<void> testJson(CLIP clip) async {
+    final startTime = DateTime.now();
+    final input = {
+      "embeddings": ["Hello", "world"],
+    };
+    String result = clip.runInference(jsonEncode(input));
+    final endTime = DateTime.now();
+    print("Output: " +
         result +
         " (" +
         (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
