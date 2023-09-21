@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:clip_ggml/clip_ggml.dart';
@@ -22,44 +23,49 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
   // This widget is the root of your application.
 
-  void loadModel() {
+  Future<void> loadAndRunModel() async {
     final clip = CLIP();
     const modelPath =
         "assets/models/openai_clip-vit-base-patch32.ggmlv0.f16.bin";
 
-    getAccessiblePathForAsset(modelPath, "model.bin").then((path) async {
-      var startTime = DateTime.now();
-      clip.loadModel(path);
-      var endTime = DateTime.now();
-      final imagePath = await getAccessiblePathForAsset(
-        "assets/cycle.jpg",
-        "cycle.jpg",
-      );
-      print("Loading model took: " +
-          (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
-              .toString() +
-          "ms");
+    final path = await getAccessiblePathForAsset(modelPath, "model.bin");
+    var startTime = DateTime.now();
+    clip.loadModel(path);
+    var endTime = DateTime.now();
+    print("Loading model took: " +
+        (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
+            .toString() +
+        "ms");
 
-      startTime = DateTime.now();
-      clip.createImageEmbedding(imagePath);
-      endTime = DateTime.now();
-      print("Creating image embedding took: " +
-          (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
-              .toString() +
-          "ms");
+    // runModel(clip);
+    testJson(clip);
+  }
 
-      await runInference(clip, "cycle");
-      await runInference(clip, "red car");
-      await runInference(clip, "beach");
-      await runInference(clip, "grey cycle");
-      await runInference(clip, "beach");
-      await runInference(clip, "rockrider");
-    });
+  Future<void> runModel(CLIP clip) async {
+    final imagePath = await getAccessiblePathForAsset(
+      "assets/cycle.jpg",
+      "cycle.jpg",
+    );
+
+    final startTime = DateTime.now();
+    clip.createImageEmbedding(imagePath);
+    final endTime = DateTime.now();
+    print("Creating image embedding took: " +
+        (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
+            .toString() +
+        "ms");
+
+    await runInference(clip, "cycle");
+    await runInference(clip, "red car");
+    await runInference(clip, "beach");
+    await runInference(clip, "grey cycle");
+    await runInference(clip, "beach");
+    await runInference(clip, "rockrider");
   }
 
   Future<void> runInference(CLIP clip, String textQuery) async {
     final startTime = DateTime.now();
-    String result = clip.runInference(textQuery);
+    String result = clip.testJSON(textQuery);
     final endTime = DateTime.now();
     print(textQuery +
         ": " +
@@ -70,9 +76,24 @@ class MyApp extends StatelessWidget {
         "ms)");
   }
 
+  Future<void> testJson(CLIP clip) async {
+    final startTime = DateTime.now();
+    final input = {
+      "embeddings": ["Hello", "world"],
+    };
+    String result = clip.runInference(jsonEncode(input));
+    final endTime = DateTime.now();
+    print("Output: " +
+        result +
+        " (" +
+        (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
+            .toString() +
+        "ms)");
+  }
+
   @override
   Widget build(BuildContext context) {
-    loadModel();
+    loadAndRunModel();
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
