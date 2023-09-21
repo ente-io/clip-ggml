@@ -5,6 +5,10 @@
 #include <fstream>
 #include <cerrno>
 #include <cstring>
+#include "json.hpp"
+
+using json = nlohmann::json;
+
 
 char *model = "models/openai_clip-vit-base-patch32.ggmlv0.f16.bin";
 char *image_path = "models/red_apple.jpg";
@@ -19,6 +23,14 @@ char *str_to_charp(std::string s)
   char *result = new char[s.size() + 1];
   strcpy(result, s.c_str());
   return result;
+}
+
+char *jsonToChar(json jsonData)
+{
+    std::string result = jsonData.dump();
+    char *ch = new char[result.size() + 1];
+    strcpy(ch, result.c_str());
+    return ch;
 }
 
 extern "C"
@@ -39,6 +51,7 @@ extern "C"
 
   char *create_image_embedding(char *dart_image_path)
   {
+    json result;
     if (!ctx)
     {
       std::string error_message = "Model not loaded";
@@ -67,12 +80,20 @@ extern "C"
       return image_encode_failure;
     }
 
+    // Creating result JSON
+    result["vec_dim"] = std::to_string(vec_dim);
+    std::string embedding_string = "";
+    for (int i = 0; i < vec_dim; i++) {
+      embedding_string += std::to_string(img_vec[i]) + "_";
+    }
+    result["embedding"] = embedding_string;
+
     for (int i = 0; i < sizeof(img_vec) / sizeof(img_vec[0]); i++)
     {
       cached_img_vec[i] = img_vec[i];
     }
 
-    return str_to_charp("ok");
+    return jsonToChar(result);
   }
 
   char *run_inference(char *dart_text)
