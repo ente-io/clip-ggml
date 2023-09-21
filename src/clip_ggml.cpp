@@ -46,33 +46,33 @@ std::string arrayToArrayString(float * embedding, int length)
 }
 
 // Source: https://gist.github.com/gustavorv86/c5fe4f279258ac0cfcebad88bb6acee2
-void string_split(char * string, char sep, char *** r_array_string, int * r_size) {
-	int i, k, len, size;
-	char ** array_string;
+// void string_split(char * string, char sep, char *** r_array_string, int * r_size) {
+// 	int i, k, len, size;
+// 	char ** array_string;
 	
-	// Number of substrings
-	size = 1, len = strlen(string);
-	for(i = 0; i < len; i++) {
-		if(string[i] == sep) {
-			size++;
-		}
-	}
+// 	// Number of substrings
+// 	size = 1, len = strlen(string);
+// 	for(i = 0; i < len; i++) {
+// 		if(string[i] == sep) {
+// 			size++;
+// 		}
+// 	}
 	
-	array_string = malloc(size * sizeof(char*));
+// 	array_string = malloc(size * sizeof(char*));
 	
-	i=0, k=0;
-	array_string[k++] = string; // Save the first substring pointer
-	// Split 'string' into substrings with \0 character
-	while(k < size) {
-		if(string[i++] == sep) {
-			string[i-1] = '\0'; // Set end of substring
-			array_string[k++] = (string+i); // Save the next substring pointer
-		}
-	}
-	*r_array_string = array_string;
-	*r_size = size;
-	return;
-}
+// 	i=0, k=0;
+// 	array_string[k++] = string; // Save the first substring pointer
+// 	// Split 'string' into substrings with \0 character
+// 	while(k < size) {
+// 		if(string[i++] == sep) {
+// 			string[i-1] = '\0'; // Set end of substring
+// 			array_string[k++] = (string+i); // Save the next substring pointer
+// 		}
+// 	}
+// 	*r_array_string = array_string;
+// 	*r_size = size;
+// 	return;
+// }
 
 extern "C"
 {
@@ -159,22 +159,22 @@ extern "C"
     return jsonToChar(result);
   }
 
-  char *get_score(char *image_embedding, char *text_embedding, int vec_dim)
-  {
-    // TODO: handle errors from this function
-    float image_embedding_array[vec_dim];
-    float text_embedding_array[vec_dim];
+  // char *get_score(char *image_embedding, char *text_embedding, int vec_dim)
+  // {
+  //   // TODO: handle errors from this function
+  //   float image_embedding_array[vec_dim];
+  //   float text_embedding_array[vec_dim];
 
-    char **image_char_array, **text_char_array;
-    int size;
-    string_split(image_embedding, ',', &image_char_array, &size);
-    string_split(text_embedding, ',', &text_char_array, &size);
-    for (int i = 0; i < vec_dim; i++) {
-      image_embedding_array[i] = std::stof(image_char_array[i]);
-      text_embedding_array[i] = std::stof(text_char_array[i]);
-    }
-    return str_to_charp(std::to_string(clip_similarity_score(image_embedding_array, text_embedding_array, vec_dim)));
-  }
+  //   char **image_char_array, **text_char_array;
+  //   int size;
+  //   string_split(image_embedding, ',', &image_char_array, &size);
+  //   string_split(text_embedding, ',', &text_char_array, &size);
+  //   for (int i = 0; i < vec_dim; i++) {
+  //     image_embedding_array[i] = std::stof(image_char_array[i]);
+  //     text_embedding_array[i] = std::stof(text_char_array[i]);
+  //   }
+  //   return str_to_charp(std::to_string(clip_similarity_score(image_embedding_array, text_embedding_array, vec_dim)));
+  // }
 
   char *test_json(char *body) {
     json jsonBody = json::parse(body);
