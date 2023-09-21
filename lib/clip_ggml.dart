@@ -48,7 +48,7 @@ class CLIP {
     var res = openLib()
         .lookupFunction<create_text_embedding_request,
             create_text_embedding_request>("create_text_embedding")
-        .call(text);
+        .call(text_string);
     return res.toDartString();
   }
 
@@ -62,9 +62,9 @@ class CLIP {
 
   String testJSON(String json) {
     ffi.Pointer<Utf8> json_string = json.toNativeUtf8();
-    var res = openLIb()
+    var res = openLib()
         .lookupFunction<test_json_request, test_json_request>("test_json")
-        .call(json);
+        .call(json_string);
     return res.toDartString();
   }
 }
