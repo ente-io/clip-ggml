@@ -11,9 +11,12 @@ typedef create_image_embedding_request = ffi.Pointer<Utf8> Function(
 typedef create_text_embedding_request = ffi.Pointer<Utf8> Function(
     ffi.Pointer<Utf8> text);
 
-typedef test_json_request = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> text);
-
 typedef inference_request = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> text);
+
+typedef get_score_request = ffi.Pointer<Utf8> Function(
+    ffi.Pointer<Utf8> image_embedding,
+    ffi.Pointer<Utf8> text_embedding,
+    ffi.Int vec_dim);
 
 class CLIP {
   final String clipLib = "libclip_ggml.so";
@@ -60,11 +63,12 @@ class CLIP {
     return res.toDartString();
   }
 
-  String testJSON(String json) {
-    ffi.Pointer<Utf8> json_string = json.toNativeUtf8();
+  String getScore(String image_embedding, String text_embedding, int vec_dim) {
+    ffi.Pointer<Utf8> image_embedding_string = image_embedding.toNativeUtf8();
+    ffi.Pointer<Utf8> text_embedding_string = text_embedding.toNativeUtf8();
     var res = openLib()
-        .lookupFunction<test_json_request, test_json_request>("test_json")
-        .call(json_string);
+        .lookupFunction<get_score_request, get_score_request>("get_score")
+        .call(image_embedding_string, text_embedding_string, vec_dim);
     return res.toDartString();
   }
 }
