@@ -25,9 +25,11 @@ typedef get_score_response = ffi.Pointer<Utf8> Function(
     int vec_dim);
 
 class CLIP {
-  final String clipLib = "libclip_ggml.so";
+  static const clipLib = "libclip_ggml.so";
 
-  ffi.DynamicLibrary openLib() {
+  static final _clip = openLib();
+
+  static ffi.DynamicLibrary openLib() {
     if (Platform.isIOS || Platform.isMacOS) {
       return ffi.DynamicLibrary.process();
     } else {
@@ -35,15 +37,15 @@ class CLIP {
     }
   }
 
-  String loadModel(String modelPath) {
-    var res = openLib()
+  static loadModel(String modelPath) {
+    var res = _clip
         .lookupFunction<load_model_request, load_model_request>("load_model")
         .call(modelPath.toNativeUtf8());
     return res.toDartString();
   }
 
-  List<double> createImageEmbedding(String imagePath) {
-    final res = openLib()
+  static List<double> createImageEmbedding(String imagePath) {
+    final res = _clip
         .lookupFunction<create_image_embedding_request,
             create_image_embedding_request>("create_image_embedding")
         .call(imagePath.toNativeUtf8());
@@ -51,8 +53,8 @@ class CLIP {
         jsonDecode(jsonDecode(res.toDartString())["embedding"]) as List);
   }
 
-  List<double> createTextEmbedding(String text) {
-    final res = openLib()
+  static List<double> createTextEmbedding(String text) {
+    final res = _clip
         .lookupFunction<create_text_embedding_request,
             create_text_embedding_request>("create_text_embedding")
         .call(text.toNativeUtf8());
@@ -60,14 +62,15 @@ class CLIP {
         jsonDecode(jsonDecode(res.toDartString())["embedding"]) as List);
   }
 
-  String runInference(String text) {
-    var res = openLib()
+  static String runInference(String text) {
+    var res = _clip
         .lookupFunction<inference_request, inference_request>("run_inference")
         .call(text.toNativeUtf8());
     return res.toDartString();
   }
 
-  double computeScore(List<double> imageEmbedding, List<double> textEmbedding) {
+  static double computeScore(
+      List<double> imageEmbedding, List<double> textEmbedding) {
     assert(imageEmbedding.length == textEmbedding.length,
         "The two embeddings should have the same length");
     double score = 0;
