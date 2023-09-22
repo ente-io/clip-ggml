@@ -37,8 +37,7 @@ class MyApp extends StatelessWidget {
             .toString() +
         "ms");
 
-    // runModel(clip);
-    testJson(clip);
+    runModel(clip);
   }
 
   Future<void> runModel(CLIP clip) async {
@@ -48,47 +47,51 @@ class MyApp extends StatelessWidget {
     );
 
     final startTime = DateTime.now();
-    clip.createImageEmbedding(imagePath);
+    final imageEmbedding = clip.createImageEmbedding(imagePath);
     final endTime = DateTime.now();
     print("Creating image embedding took: " +
         (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
             .toString() +
         "ms");
 
-    await runInference(clip, "cycle");
-    await runInference(clip, "red car");
-    await runInference(clip, "beach");
-    await runInference(clip, "grey cycle");
-    await runInference(clip, "beach");
-    await runInference(clip, "rockrider");
+    await runInference(clip, imageEmbedding, "cycle");
+    await runInference(clip, imageEmbedding, "red car");
+    await runInference(clip, imageEmbedding, "beach");
+    await runInference(clip, imageEmbedding, "grey cycle");
+    await runInference(clip, imageEmbedding, "beach");
+    await runInference(clip, imageEmbedding, "rockrider");
   }
 
-  Future<void> runInference(CLIP clip, String textQuery) async {
+  Future<void> runInference(
+      CLIP clip, String imageEmbedding, String textQuery) async {
     final startTime = DateTime.now();
-    String result = clip.testJSON(textQuery);
+    String textEmbedding = clip.createTextEmbedding(textQuery);
     final endTime = DateTime.now();
+    print("Creating text embedding took: " +
+        (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
+            .toString() +
+        "ms");
+    final score = await computeScore(clip, imageEmbedding, textEmbedding);
     print(textQuery +
         ": " +
-        result +
+        score +
         " (" +
         (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
             .toString() +
         "ms)");
   }
 
-  Future<void> testJson(CLIP clip) async {
+  Future<String> computeScore(
+      CLIP clip, String imageEmbedding, String textEmbedding) async {
     final startTime = DateTime.now();
-    final input = {
-      "embeddings": ["Hello", "world"],
-    };
-    String result = clip.runInference(jsonEncode(input));
+    String score = clip.getScore(jsonDecode(imageEmbedding)["embedding"],
+        jsonDecode(textEmbedding)["embedding"], 512);
     final endTime = DateTime.now();
-    print("Output: " +
-        result +
-        " (" +
+    print("Computing score took: " +
         (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
             .toString() +
-        "ms)");
+        "ms");
+    return score;
   }
 
   @override
