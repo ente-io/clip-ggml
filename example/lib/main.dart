@@ -73,19 +73,22 @@ class MyApp extends StatelessWidget {
         "ms");
     final score = await computeScore(clip, imageEmbedding, textEmbedding);
     print(textQuery +
-        ": " +
-        score +
+        " score: " +
+        score.toString() +
         " (" +
         (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
             .toString() +
         "ms)");
   }
 
-  Future<String> computeScore(
+  Future<double> computeScore(
       CLIP clip, String imageEmbedding, String textEmbedding) async {
     final startTime = DateTime.now();
-    String score = clip.getScore(jsonDecode(imageEmbedding)["embedding"],
-        jsonDecode(textEmbedding)["embedding"], 512);
+    final imgEmbedding = List<double>.from(
+        jsonDecode(jsonDecode(imageEmbedding)["embedding"]) as List);
+    final txtEmbedding = List<double>.from(
+        jsonDecode(jsonDecode(textEmbedding)["embedding"]) as List);
+    final score = clip.computeScore(imgEmbedding, txtEmbedding);
     final endTime = DateTime.now();
     print("Computing score took: " +
         (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
