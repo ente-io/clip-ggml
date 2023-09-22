@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'package:ffi/ffi.dart';
@@ -35,45 +36,34 @@ class CLIP {
   }
 
   String loadModel(String modelPath) {
-    ffi.Pointer<Utf8> model_string = modelPath.toNativeUtf8();
     var res = openLib()
         .lookupFunction<load_model_request, load_model_request>("load_model")
-        .call(model_string);
+        .call(modelPath.toNativeUtf8());
     return res.toDartString();
   }
 
-  String createImageEmbedding(String imagePath) {
-    ffi.Pointer<Utf8> image_string = imagePath.toNativeUtf8();
-    var res = openLib()
+  List<double> createImageEmbedding(String imagePath) {
+    final res = openLib()
         .lookupFunction<create_image_embedding_request,
             create_image_embedding_request>("create_image_embedding")
-        .call(image_string);
-    return res.toDartString();
+        .call(imagePath.toNativeUtf8());
+    return List<double>.from(
+        jsonDecode(jsonDecode(res.toDartString())["embedding"]) as List);
   }
 
-  String createTextEmbedding(String text) {
-    ffi.Pointer<Utf8> text_string = text.toNativeUtf8();
-    var res = openLib()
+  List<double> createTextEmbedding(String text) {
+    final res = openLib()
         .lookupFunction<create_text_embedding_request,
             create_text_embedding_request>("create_text_embedding")
-        .call(text_string);
-    return res.toDartString();
+        .call(text.toNativeUtf8());
+    return List<double>.from(
+        jsonDecode(jsonDecode(res.toDartString())["embedding"]) as List);
   }
 
   String runInference(String text) {
-    ffi.Pointer<Utf8> text_string = text.toNativeUtf8();
     var res = openLib()
         .lookupFunction<inference_request, inference_request>("run_inference")
-        .call(text_string);
-    return res.toDartString();
-  }
-
-  String getScore(String image_embedding, String text_embedding, int vec_dim) {
-    ffi.Pointer<Utf8> image_embedding_string = image_embedding.toNativeUtf8();
-    ffi.Pointer<Utf8> text_embedding_string = text_embedding.toNativeUtf8();
-    var res = openLib()
-        .lookupFunction<get_score_request, get_score_response>("get_score")
-        .call(image_embedding_string, text_embedding_string, vec_dim);
+        .call(text.toNativeUtf8());
     return res.toDartString();
   }
 
