@@ -76,4 +76,14 @@ class CLIP {
         .call(image_embedding_string, text_embedding_string, vec_dim);
     return res.toDartString();
   }
+
+  double computeScore(List<double> imageEmbedding, List<double> textEmbedding) {
+    assert(imageEmbedding.length == textEmbedding.length,
+        "The two embeddings should have the same length");
+    double score = 0;
+    for (int index = 0; index < imageEmbedding.length; index++) {
+      score += imageEmbedding[index] * textEmbedding[index];
+    }
+    return score;
+  }
 }
