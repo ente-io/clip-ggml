@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ffi' as ffi;
 import 'dart:io';
+import 'dart:math';
 import 'package:ffi/ffi.dart';
 
 typedef load_model_request = ffi.Pointer<Utf8> Function(
@@ -74,6 +75,17 @@ class CLIP {
     assert(imageEmbedding.length == textEmbedding.length,
         "The two embeddings should have the same length");
     double score = 0;
+    double imageNormalization = 0, textNormalization = 0;
+    for (int index = 0; index < imageEmbedding.length; index++) {
+      imageNormalization += imageEmbedding[index] * imageEmbedding[index];
+      textNormalization += textEmbedding[index] * textEmbedding[index];
+    }
+    imageNormalization = sqrt(imageNormalization);
+    textNormalization = sqrt(textNormalization);
+    for (int index = 0; index < imageEmbedding.length; index++) {
+      imageEmbedding[index] /= imageNormalization;
+      textEmbedding[index] /= textNormalization;
+    }
     for (int index = 0; index < imageEmbedding.length; index++) {
       score += imageEmbedding[index] * textEmbedding[index];
     }
