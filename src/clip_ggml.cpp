@@ -9,6 +9,20 @@
 
 using json = nlohmann::json;
 
+struct clip_image_u8_batch make_clip_image_u8_batch(std::vector<clip_image_u8> & images) {
+    struct clip_image_u8_batch batch;
+    batch.data = images.data();
+    batch.size = images.size();
+    return batch;
+}
+
+// Constructor-like function
+struct clip_image_f32_batch make_clip_image_f32_batch(std::vector<clip_image_f32> & images) {
+    struct clip_image_f32_batch batch;
+    batch.data = images.data();
+    batch.size = images.size();
+    return batch;
+}
 
 char *model = "models/openai_clip-vit-base-patch32.ggmlv0.f16.bin";
 char *image_path = "models/red_apple.jpg";
@@ -33,11 +47,11 @@ char *jsonToChar(json jsonData)
     return ch;
 }
 
-std::string arrayToArrayString(float * embedding, int length)
+std::string arrayToArrayString(float * embedding, int length, int start = 0)
 {
   std::string embedding_string = "[";
 
-  for (int i = 0; i < length; i++) {
+  for (int i = start; i < start + length; i++) {
     embedding_string += std::to_string(embedding[i]) + ",";
   }
   embedding_string.pop_back();
@@ -101,6 +115,47 @@ extern "C"
       cached_img_vec[i] = img_vec[i];
     }
 
+    return jsonToChar(result);
+  }
+
+  char *batch_image_embeddings(char *body)
+  {
+
+    if (!ctx)
+    {
+      std::string error_message = "Model not loaded";
+      return str_to_charp(error_message);
+    }
+
+    const size_t n_threads = 4;
+    json jsonBody = json::parse(body);
+    int batch_size = jsonBody["batch_size"];
+    int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
+
+    std::vector<clip_image_u8> img_inputs(batch_size);
+    std::vector<clip_image_f32> imgs_resized(batch_size);
+    float img_vecs[vec_dim * batch_size];
+
+    for (int i = 0; i < batch_size; i++) {
+      char *image_path = str_to_charp(jsonBody["image_paths"][i]);
+      if (!clip_image_load_from_file(image_path, &img_inputs[i])) {
+        fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, image_path);
+        return image_load_failure;
+      }
+    }
+
+    clip_image_u8_batch img_inputs_batch = make_clip_image_u8_batch(img_inputs);
+    clip_image_f32_batch imgs_resized_batch = make_clip_image_f32_batch(imgs_resized);
+
+    
+    clip_image_batch_preprocess(ctx, n_threads, &img_inputs_batch, &imgs_resized_batch);
+    clip_image_batch_encode(ctx, n_threads, &imgs_resized_batch, img_vecs, true);
+
+    json result;
+    result["vec_dim"] = std::to_string(vec_dim);
+    for (int i = 0; i < batch_size; i++) {
+      result["embedding_" + std::to_string(i)] = arrayToArrayString(img_vecs, vec_dim, vec_dim * i);
+    }
     return jsonToChar(result);
   }
 
