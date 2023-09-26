@@ -153,9 +153,8 @@ extern "C"
     clip_image_batch_encode(ctx, n_threads, &imgs_resized_batch, img_vecs, true);
 
     json result;
-    result["vec_dim"] = std::to_string(vec_dim);
     for (int i = 0; i < batch_size; i++) {
-      result["embedding_" + std::to_string(i)] = arrayToArrayString(img_vecs, vec_dim, vec_dim * i);
+      result[std::to_string(i)] = arrayToArrayString(img_vecs, vec_dim, vec_dim * i);
     }
     return jsonToChar(result);
   }

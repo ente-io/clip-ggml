@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ffi' as ffi;
 import 'dart:io';
+import 'dart:math';
 import 'package:ffi/ffi.dart';
 
 typedef load_model_request = ffi.Pointer<Utf8> Function(
@@ -8,6 +9,9 @@ typedef load_model_request = ffi.Pointer<Utf8> Function(
 
 typedef create_image_embedding_request = ffi.Pointer<Utf8> Function(
     ffi.Pointer<Utf8> image_path);
+
+typedef create_batch_image_embedding_request = ffi.Pointer<Utf8> Function(
+    ffi.Pointer<Utf8> request);
 
 typedef create_text_embedding_request = ffi.Pointer<Utf8> Function(
     ffi.Pointer<Utf8> text);
@@ -53,6 +57,23 @@ class CLIP {
         jsonDecode(jsonDecode(res.toDartString())["embedding"]) as List);
   }
 
+  static List<List<double>> createBatchImageEmbedding(List<String> imagePaths) {
+    final args = <String, dynamic>{};
+    args["batch_size"] = imagePaths.length;
+    args["image_paths"] = imagePaths;
+    final res = _clip
+        .lookupFunction<create_batch_image_embedding_request,
+            create_batch_image_embedding_request>("batch_image_embeddings")
+        .call(jsonEncode(args).toNativeUtf8());
+    final result = jsonDecode(res.toDartString());
+    final List<List<double>> embeddings = [];
+    for (int i = 0; i < imagePaths.length; i++) {
+      embeddings
+          .add(List<double>.from(jsonDecode(result[i.toString()]) as List));
+    }
+    return embeddings;
+  }
+
   static List<double> createTextEmbedding(String text) {
     final res = _clip
         .lookupFunction<create_text_embedding_request,
@@ -74,6 +95,17 @@ class CLIP {
     assert(imageEmbedding.length == textEmbedding.length,
         "The two embeddings should have the same length");
     double score = 0;
+    double imageNormalization = 0, textNormalization = 0;
+    for (int index = 0; index < imageEmbedding.length; index++) {
+      imageNormalization += imageEmbedding[index] * imageEmbedding[index];
+      textNormalization += textEmbedding[index] * textEmbedding[index];
+    }
+    imageNormalization = sqrt(imageNormalization);
+    textNormalization = sqrt(textNormalization);
+    for (int index = 0; index < imageEmbedding.length; index++) {
+      imageEmbedding[index] /= imageNormalization;
+      textEmbedding[index] /= textNormalization;
+    }
     for (int index = 0; index < imageEmbedding.length; index++) {
       score += imageEmbedding[index] * textEmbedding[index];
     }
