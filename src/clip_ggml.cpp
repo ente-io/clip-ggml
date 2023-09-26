@@ -6,6 +6,7 @@
 #include <cerrno>
 #include <cstring>
 #include "json.hpp"
+#include "cli.cpp"
 
 using json = nlohmann::json;
 
@@ -253,7 +254,57 @@ extern "C"
   }
 }
 
-int main()
+int main(int argc, char **argv)
 {
+  cli_params params;
+  if (!cli_params_parse(argc, argv, params)) {
+        print_help(argc, argv, params);
+        return 1;
+  }
+
+  auto ctx = clip_model_load(params.model.c_str(), params.verbose);
+  if (!ctx) {
+        printf("%s: Unable  to load model from %s", __func__, params.model.c_str());
+        return 1;
+  }
+
+  if (params.image_path.empty()) {
+    // Didn't call the above APIs since it requires a persistent ctx
+    const char * text = params.text.c_str();
+    int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
+    struct clip_tokens tokens = clip_tokenize(ctx, text);
+    float txt_vec[vec_dim];
+    if (!clip_text_encode(ctx, 4, &tokens, txt_vec, true))
+    {
+      fprintf(stderr, "%s: failed to encode text\n", __func__);
+      return 0;
+    }
+    std::cout << arrayToArrayString(txt_vec, vec_dim);
+    return 1;
+  }
+
+  // Same for image
+  int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
+  struct clip_image_u8 *img0 = make_clip_image_u8();
+  if (!clip_image_load_from_file(str_to_charp(params.image_path), img0))
+  {
+    fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, image_path);
+    return 0;
+  }
+
+  struct clip_image_f32 *img_res = make_clip_image_f32();
+  if (!clip_image_preprocess(ctx, img0, img_res))
+  {
+    fprintf(stderr, "%s: failed to preprocess image\n", __func__);
+    return 0;
+  }
+
+  float img_vec[vec_dim];
+  if (!clip_image_encode(ctx, 4, img_res, img_vec, true))
+  {
+    fprintf(stderr, "%s: failed to encode image\n", __func__);
+    return 0;
+  }
+  std::cout << arrayToArrayString(img_vec, vec_dim);
   return 1;
 }
