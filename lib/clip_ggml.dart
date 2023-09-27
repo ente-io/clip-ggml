@@ -10,6 +10,9 @@ typedef load_model_request = ffi.Pointer<Utf8> Function(
 typedef create_image_embedding_request = ffi.Pointer<Utf8> Function(
     ffi.Pointer<Utf8> image_path);
 
+typedef preprocess_image_embedding_request = ffi.Pointer<Utf8> Function(
+    ffi.Pointer<Utf8> image_path);
+
 typedef create_batch_image_embedding_request = ffi.Pointer<Utf8> Function(
     ffi.Pointer<Utf8> request);
 
@@ -55,6 +58,14 @@ class CLIP {
         .call(imagePath.toNativeUtf8());
     return List<double>.from(
         jsonDecode(jsonDecode(res.toDartString())["embedding"]) as List);
+  }
+
+  static String preprocessImage(String imagePath) {
+    final res = _clip
+        .lookup<preprocess_image_embedding_request,
+            preprocess_image_embedding_request>("preprocess_image")
+        .call(imagePath.toNativeUtf8());
+    return res.toDartString();
   }
 
   static List<List<double>> createBatchImageEmbedding(List<String> imagePaths) {

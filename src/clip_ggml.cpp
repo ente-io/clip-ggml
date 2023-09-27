@@ -76,6 +76,31 @@ extern "C"
     return str_to_charp("ok");
   }
 
+  char *preprocess_image(char *dart_image_path) {
+    if (!ctx)
+    {
+      std::string error_message = "Model not loaded";
+      return str_to_charp(error_message);
+    }
+
+    int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
+    struct clip_image_u8 *img0 = make_clip_image_u8();
+
+    if (!clip_image_load_from_file(dart_image_path, img0))
+    {
+      fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, image_path);
+      return image_load_failure;
+    }
+
+    struct clip_image_f32 *img_res = make_clip_image_f32();
+    if (!clip_image_preprocess(ctx, img0, img_res))
+    {
+      fprintf(stderr, "%s: failed to preprocess image\n", __func__);
+      return image_preprocess_failure;
+    }
+    return str_to_charp("ok");
+  }
+
   char *create_image_embedding(char *dart_image_path)
   {
     json result;
