@@ -62,7 +62,7 @@ class CLIP {
 
   static String preprocessImage(String imagePath) {
     final res = _clip
-        .lookup<preprocess_image_embedding_request,
+        .lookupFunction<preprocess_image_embedding_request,
             preprocess_image_embedding_request>("preprocess_image")
         .call(imagePath.toNativeUtf8());
     return res.toDartString();
