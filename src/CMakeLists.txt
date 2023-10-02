@@ -14,8 +14,7 @@ set_target_properties(clip_ggml PROPERTIES
   OUTPUT_NAME "clip_ggml"
 )
 
-add_library(clip clip.cpp/clip.cpp)
-add_library(ggml clip.cpp/ggml/src/ggml.c)
+add_subdirectory(clip.cpp)
 
 target_compile_definitions(clip_ggml PUBLIC DART_SHARED_LIB)
 target_link_libraries(clip_ggml PRIVATE clip ggml ${CMAKE_THREAD_LIBS_INIT})
