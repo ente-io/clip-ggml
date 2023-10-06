@@ -285,7 +285,8 @@ int main(int argc, char **argv)
         print_help(argc, argv, params);
         return 1;
   }
-
+  ggml_time_init();
+  const int64_t model_load = ggml_time_us();
   auto ctx = clip_model_load(params.model.c_str(), params.verbose);
   if (!ctx) {
         printf("%s: Unable  to load model from %s", __func__, params.model.c_str());
@@ -307,6 +308,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  const int64_t image_load = ggml_time_us();
   // Same for image
   int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
   struct clip_image_u8 *img0 = make_clip_image_u8();
@@ -315,20 +317,25 @@ int main(int argc, char **argv)
     fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, image_path);
     return 0;
   }
-
+  const int64_t image_preprocess = ggml_time_us();
   struct clip_image_f32 *img_res = make_clip_image_f32();
   if (!clip_image_preprocess(ctx, img0, img_res))
   {
     fprintf(stderr, "%s: failed to preprocess image\n", __func__);
     return 0;
   }
-
+  const int64_t image_encode = ggml_time_us();
   float img_vec[vec_dim];
   if (!clip_image_encode(ctx, 4, img_res, img_vec, true))
   {
     fprintf(stderr, "%s: failed to encode image\n", __func__);
     return 0;
   }
+  const int64_t done = ggml_time_us();
   std::cout << arrayToArrayString(img_vec, vec_dim);
+  std::cout << "Model load: " << (image_load - model_load) / 1000 << "\n";
+  std::cout << "Image load: " << (image_preprocess - image_load) / 1000 << "\n";
+  std::cout << "Image preprocess: " << (image_encode - image_preprocess) / 1000 << "\n";
+  std::cout << "Image encode: " << (done - image_encode) / 1000 << "\n";
   return 1;
 }
