@@ -5,7 +5,8 @@
 struct cli_params {
     int32_t n_threads = std::min(4, (int32_t)std::thread::hardware_concurrency());
 
-    std::string model = "models/ggml-model-f16.bin";
+    std::string img_model = "models/clip-vit-base-patch32_ggml-vision-model-f16.gguf";
+    std::string txt_model = "models/clip-vit-base-patch32_ggml-text-model-f16.gguf";
     std::string image_path;
     std::string text;
     int verbose = 1;
@@ -15,7 +16,8 @@ void print_help(int argc, char ** argv, cli_params & params) {
     printf("Usage: %s [options]\n", argv[0]);
     printf("\nOptions:");
     printf("  -h, --help: Show this message and exit\n");
-    printf("  -m <path>, --model <path>: path to model. Default: %s\n", params.model.c_str());
+    printf("  -mv <path>, --modelvision <path>: path to vision model. Default: %s\n", params.img_model.c_str());
+    printf("  -mt <path>, --modeltext <path>: path to text model. Default: %s\n", params.txt_model.c_str());
     printf("  -t N, --threads N: Number of threads to use for inference. Default: %d\n", params.n_threads);
     printf("  --text <text>: Text to encode.\n");
     printf("  --image <path>: Path to an image file.\n");
@@ -26,8 +28,10 @@ void print_help(int argc, char ** argv, cli_params & params) {
 bool cli_params_parse(int argc, char ** argv, cli_params & params) {
     for (int i = 0; i < argc; i++) {
         std::string arg = std::string(argv[i]);
-        if (arg == "-m" || arg == "--model") {
-            params.model = argv[++i];
+        if (arg == "-mv" || arg == "--modelvision") {
+            params.img_model = argv[++i];
+        } else if (arg == "-mt" || arg == "--modeltext") {
+            params.txt_model = argv[++i];
         } else if (arg == "-t" || arg == "--threads") {
             params.n_threads = std::stoi(argv[++i]);
         } else if (arg == "--text") {

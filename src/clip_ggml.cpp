@@ -62,28 +62,40 @@ std::string arrayToArrayString(float * embedding, int length, int start = 0)
 
 extern "C"
 {
-  struct clip_ctx *ctx;
+  struct clip_ctx *img_ctx;
+  struct clip_ctx *txt_ctx;
   float cached_img_vec[512];
 
-  char *load_model(char *model_path)
+  char *load_image_model(char *image_model_path)
   {
-    ctx = clip_model_load(model_path, 1);
-    if (!ctx)
+    img_ctx = clip_model_load(image_model_path, 1);
+    if (!img_ctx)
     {
-      std::string error_message = "Model not loaded";
+      std::string error_message = "Image model not loaded";
+      return str_to_charp(error_message);
+    }
+    return str_to_charp("ok");
+  }
+
+  char *load_text_model(char *text_model_path)
+  {
+    txt_ctx = clip_model_load(text_model_path, 1);
+    if (!txt_ctx)
+    {
+      std::string error_message = "Text model not loaded";
       return str_to_charp(error_message);
     }
     return str_to_charp("ok");
   }
 
   char *preprocess_image(char *dart_image_path) {
-    if (!ctx)
+    if (!img_ctx)
     {
       std::string error_message = "Model not loaded";
       return str_to_charp(error_message);
     }
 
-    int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
+    int vec_dim = clip_get_vision_hparams(img_ctx)->projection_dim;
     struct clip_image_u8 *img0 = make_clip_image_u8();
 
     if (!clip_image_load_from_file(dart_image_path, img0))
@@ -93,7 +105,7 @@ extern "C"
     }
 
     struct clip_image_f32 *img_res = make_clip_image_f32();
-    if (!clip_image_preprocess(ctx, img0, img_res))
+    if (!clip_image_preprocess(img_ctx, img0, img_res))
     {
       fprintf(stderr, "%s: failed to preprocess image\n", __func__);
       return image_preprocess_failure;
@@ -104,13 +116,13 @@ extern "C"
   char *create_image_embedding(char *dart_image_path)
   {
     json result;
-    if (!ctx)
+    if (!img_ctx)
     {
       std::string error_message = "Model not loaded";
       return str_to_charp(error_message);
     }
 
-    int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
+    int vec_dim = clip_get_vision_hparams(img_ctx)->projection_dim;
     struct clip_image_u8 *img0 = make_clip_image_u8();
     if (!clip_image_load_from_file(dart_image_path, img0))
     {
@@ -119,14 +131,14 @@ extern "C"
     }
 
     struct clip_image_f32 *img_res = make_clip_image_f32();
-    if (!clip_image_preprocess(ctx, img0, img_res))
+    if (!clip_image_preprocess(img_ctx, img0, img_res))
     {
       fprintf(stderr, "%s: failed to preprocess image\n", __func__);
       return image_preprocess_failure;
     }
 
     float img_vec[vec_dim];
-    if (!clip_image_encode(ctx, 4, img_res, img_vec, true))
+    if (!clip_image_encode(img_ctx, 4, img_res, img_vec, true))
     {
       fprintf(stderr, "%s: failed to encode image\n", __func__);
       return image_encode_failure;
@@ -147,7 +159,7 @@ extern "C"
   char *batch_image_embeddings(char *body)
   {
 
-    if (!ctx)
+    if (!img_ctx)
     {
       std::string error_message = "Model not loaded";
       return str_to_charp(error_message);
@@ -156,7 +168,7 @@ extern "C"
     const size_t n_threads = 4;
     json jsonBody = json::parse(body);
     int batch_size = jsonBody["batch_size"];
-    int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
+    int vec_dim = clip_get_vision_hparams(img_ctx)->projection_dim;
 
     std::vector<clip_image_u8> img_inputs(batch_size);
     std::vector<clip_image_f32> imgs_resized(batch_size);
@@ -174,8 +186,8 @@ extern "C"
     clip_image_f32_batch imgs_resized_batch = make_clip_image_f32_batch(imgs_resized);
 
     
-    clip_image_batch_preprocess(ctx, n_threads, &img_inputs_batch, &imgs_resized_batch);
-    clip_image_batch_encode(ctx, n_threads, &imgs_resized_batch, img_vecs, true);
+    clip_image_batch_preprocess(img_ctx, n_threads, &img_inputs_batch, &imgs_resized_batch);
+    clip_image_batch_encode(img_ctx, n_threads, &imgs_resized_batch, img_vecs, true);
 
     json result;
     for (int i = 0; i < batch_size; i++) {
@@ -187,17 +199,18 @@ extern "C"
   char *create_text_embedding(char *dart_text)
   {
     json result;
-    if (!ctx)
+    if (!txt_ctx)
     {
       std::string error_message = "Model not loaded";
       return str_to_charp(error_message);
     }
 
-    int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
-    struct clip_tokens tokens = clip_tokenize(ctx, dart_text);
+    int vec_dim = clip_get_vision_hparams(txt_ctx)->projection_dim;
+    clip_tokens tokens;
+    clip_tokenize(txt_ctx, dart_text, &tokens);
 
     float txt_vec[vec_dim];
-    if (!clip_text_encode(ctx, 4, &tokens, txt_vec, true))
+    if (!clip_text_encode(txt_ctx, 4, &tokens, txt_vec, true))
     {
       fprintf(stderr, "%s: failed to encode text\n", __func__);
       return text_encode_failure;
@@ -244,17 +257,18 @@ extern "C"
 
   char *run_inference(char *dart_text)
   {
-    if (!ctx)
+    if (!txt_ctx)
     {
-      std::string error_message = "Model not loaded";
+      std::string error_message = "Text model not loaded";
       return str_to_charp(error_message);
     }
 
-    int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
-    struct clip_tokens tokens = clip_tokenize(ctx, dart_text);
+    int vec_dim = clip_get_vision_hparams(img_ctx)->projection_dim;
+    clip_tokens tokens;
+    clip_tokenize(txt_ctx, dart_text, &tokens);
 
     float txt_vec[vec_dim];
-    if (!clip_text_encode(ctx, 4, &tokens, txt_vec, true))
+    if (!clip_text_encode(txt_ctx, 4, &tokens, txt_vec, true))
     {
       fprintf(stderr, "%s: failed to encode text\n", __func__);
       return text_encode_failure;
@@ -287,19 +301,26 @@ int main(int argc, char **argv)
   }
   ggml_time_init();
   const int64_t model_load = ggml_time_us();
-  auto ctx = clip_model_load(params.model.c_str(), params.verbose);
-  if (!ctx) {
-        printf("%s: Unable  to load model from %s", __func__, params.model.c_str());
+  auto img_ctx = clip_model_load(params.img_model.c_str(), params.verbose);
+  if (!img_ctx) {
+        printf("%s: Unable  to load image model from %s", __func__, params.img_model.c_str());
+        return 1;
+  }
+
+  auto txt_ctx = clip_model_load(params.txt_model.c_str(), params.verbose);
+  if (!txt_ctx) {
+        printf("%s: Unable  to load text model from %s", __func__, params.txt_model.c_str());
         return 1;
   }
 
   if (params.image_path.empty()) {
     // Didn't call the above APIs since it requires a persistent ctx
     const char * text = params.text.c_str();
-    int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
-    struct clip_tokens tokens = clip_tokenize(ctx, text);
+    int vec_dim = clip_get_vision_hparams(img_ctx)->projection_dim;
+    clip_tokens tokens;
+    clip_tokenize(txt_ctx, text, &tokens);
     float txt_vec[vec_dim];
-    if (!clip_text_encode(ctx, 4, &tokens, txt_vec, true))
+    if (!clip_text_encode(txt_ctx, 4, &tokens, txt_vec, true))
     {
       fprintf(stderr, "%s: failed to encode text\n", __func__);
       return 0;
@@ -310,7 +331,7 @@ int main(int argc, char **argv)
 
   const int64_t image_load = ggml_time_us();
   // Same for image
-  int vec_dim = clip_get_vision_hparams(ctx)->projection_dim;
+  int vec_dim = clip_get_vision_hparams(img_ctx)->projection_dim;
   struct clip_image_u8 *img0 = make_clip_image_u8();
   if (!clip_image_load_from_file(str_to_charp(params.image_path), img0))
   {
@@ -319,14 +340,14 @@ int main(int argc, char **argv)
   }
   const int64_t image_preprocess = ggml_time_us();
   struct clip_image_f32 *img_res = make_clip_image_f32();
-  if (!clip_image_preprocess(ctx, img0, img_res))
+  if (!clip_image_preprocess(img_ctx, img0, img_res))
   {
     fprintf(stderr, "%s: failed to preprocess image\n", __func__);
     return 0;
   }
   const int64_t image_encode = ggml_time_us();
   float img_vec[vec_dim];
-  if (!clip_image_encode(ctx, 4, img_res, img_vec, true))
+  if (!clip_image_encode(img_ctx, 4, img_res, img_vec, true))
   {
     fprintf(stderr, "%s: failed to encode image\n", __func__);
     return 0;
