@@ -10,19 +10,21 @@
 
 using json = nlohmann::json;
 
-struct clip_image_u8_batch make_clip_image_u8_batch(std::vector<clip_image_u8> & images) {
-    struct clip_image_u8_batch batch;
-    batch.data = images.data();
-    batch.size = images.size();
-    return batch;
+struct clip_image_u8_batch make_clip_image_u8_batch(std::vector<clip_image_u8> &images)
+{
+  struct clip_image_u8_batch batch;
+  batch.data = images.data();
+  batch.size = images.size();
+  return batch;
 }
 
 // Constructor-like function
-struct clip_image_f32_batch make_clip_image_f32_batch(std::vector<clip_image_f32> & images) {
-    struct clip_image_f32_batch batch;
-    batch.data = images.data();
-    batch.size = images.size();
-    return batch;
+struct clip_image_f32_batch make_clip_image_f32_batch(std::vector<clip_image_f32> &images)
+{
+  struct clip_image_f32_batch batch;
+  batch.data = images.data();
+  batch.size = images.size();
+  return batch;
 }
 
 char *model = "models/openai_clip-vit-base-patch32.ggmlv0.f16.bin";
@@ -42,17 +44,18 @@ char *str_to_charp(std::string s)
 
 char *jsonToChar(json jsonData)
 {
-    std::string result = jsonData.dump();
-    char *ch = new char[result.size() + 1];
-    strcpy(ch, result.c_str());
-    return ch;
+  std::string result = jsonData.dump();
+  char *ch = new char[result.size() + 1];
+  strcpy(ch, result.c_str());
+  return ch;
 }
 
-std::string arrayToArrayString(float * embedding, int length, int start = 0)
+std::string arrayToArrayString(float *embedding, int length, int start = 0)
 {
   std::string embedding_string = "[";
 
-  for (int i = start; i < start + length; i++) {
+  for (int i = start; i < start + length; i++)
+  {
     embedding_string += std::to_string(embedding[i]) + ",";
   }
   embedding_string.pop_back();
@@ -64,7 +67,6 @@ extern "C"
 {
   struct clip_ctx *img_ctx;
   struct clip_ctx *txt_ctx;
-  float cached_img_vec[512];
 
   char *load_image_model(char *image_model_path)
   {
@@ -88,7 +90,8 @@ extern "C"
     return str_to_charp("ok");
   }
 
-  char *preprocess_image(char *dart_image_path) {
+  char *preprocess_image(char *dart_image_path)
+  {
     if (!img_ctx)
     {
       std::string error_message = "Model not loaded";
@@ -148,11 +151,6 @@ extern "C"
     result["vec_dim"] = std::to_string(vec_dim);
     result["embedding"] = arrayToArrayString(img_vec, vec_dim);
 
-    for (int i = 0; i < sizeof(img_vec) / sizeof(img_vec[0]); i++)
-    {
-      cached_img_vec[i] = img_vec[i];
-    }
-
     return jsonToChar(result);
   }
 
@@ -174,9 +172,11 @@ extern "C"
     std::vector<clip_image_f32> imgs_resized(batch_size);
     float img_vecs[vec_dim * batch_size];
 
-    for (int i = 0; i < batch_size; i++) {
+    for (int i = 0; i < batch_size; i++)
+    {
       char *image_path = str_to_charp(jsonBody["image_paths"][i]);
-      if (!clip_image_load_from_file(image_path, &img_inputs[i])) {
+      if (!clip_image_load_from_file(image_path, &img_inputs[i]))
+      {
         fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, image_path);
         return image_load_failure;
       }
@@ -185,12 +185,12 @@ extern "C"
     clip_image_u8_batch img_inputs_batch = make_clip_image_u8_batch(img_inputs);
     clip_image_f32_batch imgs_resized_batch = make_clip_image_f32_batch(imgs_resized);
 
-    
     clip_image_batch_preprocess(img_ctx, n_threads, &img_inputs_batch, &imgs_resized_batch);
     clip_image_batch_encode(img_ctx, n_threads, &imgs_resized_batch, img_vecs, true);
 
     json result;
-    for (int i = 0; i < batch_size; i++) {
+    for (int i = 0; i < batch_size; i++)
+    {
       result[std::to_string(i)] = arrayToArrayString(img_vecs, vec_dim, vec_dim * i);
     }
     return jsonToChar(result);
@@ -205,7 +205,7 @@ extern "C"
       return str_to_charp(error_message);
     }
 
-    int vec_dim = clip_get_vision_hparams(txt_ctx)->projection_dim;
+    int vec_dim = clip_get_text_hparams(txt_ctx)->projection_dim;
     clip_tokens tokens;
     clip_tokenize(txt_ctx, dart_text, &tokens);
 
@@ -234,7 +234,8 @@ extern "C"
     char image_array[std::strlen(image_embedding) + 1];
     char text_array[std::strlen(text_embedding) + 1];
 
-    for (int i = 0; i < std::strlen(image_embedding) + 1; i++) {
+    for (int i = 0; i < std::strlen(image_embedding) + 1; i++)
+    {
       image_array[i] = image_embedding[i];
       text_array[i] = text_embedding[i];
     }
@@ -242,41 +243,19 @@ extern "C"
     char *text_embedding_char_array = strtok(text_array, "[,]");
 
     int i = 0;
-    while (image_embedding_char_array) {
+    while (image_embedding_char_array)
+    {
       image_embedding_array[i++] = std::stof(image_embedding_char_array);
       image_embedding_char_array = strtok(NULL, "[,]");
     }
 
     i = 0;
-    while (text_embedding_char_array) {
+    while (text_embedding_char_array)
+    {
       text_embedding_array[i++] = std::stof(text_embedding_char_array);
       text_embedding_char_array = strtok(NULL, "[,]");
     }
     return str_to_charp(std::to_string(clip_similarity_score(image_embedding_array, text_embedding_array, vec_dim)));
-  }
-
-  char *run_inference(char *dart_text)
-  {
-    if (!txt_ctx)
-    {
-      std::string error_message = "Text model not loaded";
-      return str_to_charp(error_message);
-    }
-
-    int vec_dim = clip_get_vision_hparams(img_ctx)->projection_dim;
-    clip_tokens tokens;
-    clip_tokenize(txt_ctx, dart_text, &tokens);
-
-    float txt_vec[vec_dim];
-    if (!clip_text_encode(txt_ctx, 4, &tokens, txt_vec, true))
-    {
-      fprintf(stderr, "%s: failed to encode text\n", __func__);
-      return text_encode_failure;
-    }
-
-    float score = clip_similarity_score(cached_img_vec, txt_vec, vec_dim);
-    printf("Similarity score = %2.3f\n", score);
-    return str_to_charp(std::to_string(score));
   }
 
   char *can_read_file(const char *file_path)
@@ -295,27 +274,31 @@ extern "C"
 int main(int argc, char **argv)
 {
   cli_params params;
-  if (!cli_params_parse(argc, argv, params)) {
-        print_help(argc, argv, params);
-        return 1;
+  if (!cli_params_parse(argc, argv, params))
+  {
+    print_help(argc, argv, params);
+    return 1;
   }
   ggml_time_init();
   const int64_t model_load = ggml_time_us();
   auto img_ctx = clip_model_load(params.img_model.c_str(), params.verbose);
-  if (!img_ctx) {
-        printf("%s: Unable  to load image model from %s", __func__, params.img_model.c_str());
-        return 1;
+  if (!img_ctx)
+  {
+    printf("%s: Unable  to load image model from %s", __func__, params.img_model.c_str());
+    return 1;
   }
 
   auto txt_ctx = clip_model_load(params.txt_model.c_str(), params.verbose);
-  if (!txt_ctx) {
-        printf("%s: Unable  to load text model from %s", __func__, params.txt_model.c_str());
-        return 1;
+  if (!txt_ctx)
+  {
+    printf("%s: Unable  to load text model from %s", __func__, params.txt_model.c_str());
+    return 1;
   }
 
-  if (params.image_path.empty()) {
+  if (params.image_path.empty())
+  {
     // Didn't call the above APIs since it requires a persistent ctx
-    const char * text = params.text.c_str();
+    const char *text = params.text.c_str();
     int vec_dim = clip_get_vision_hparams(img_ctx)->projection_dim;
     clip_tokens tokens;
     clip_tokenize(txt_ctx, text, &tokens);

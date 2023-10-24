@@ -19,8 +19,6 @@ typedef create_batch_image_embedding_request = ffi.Pointer<Utf8> Function(
 typedef create_text_embedding_request = ffi.Pointer<Utf8> Function(
     ffi.Pointer<Utf8> text);
 
-typedef inference_request = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> text);
-
 typedef get_score_request = ffi.Pointer<Utf8> Function(
     ffi.Pointer<Utf8> image_embedding,
     ffi.Pointer<Utf8> text_embedding,
@@ -44,9 +42,18 @@ class CLIP {
     }
   }
 
-  static loadModel(String modelPath) {
+  static loadImageModel(String modelPath) {
     var res = _clip
-        .lookupFunction<load_model_request, load_model_request>("load_model")
+        .lookupFunction<load_model_request, load_model_request>(
+            "load_image_model")
+        .call(modelPath.toNativeUtf8());
+    return res.toDartString();
+  }
+
+  static loadTextModel(String modelPath) {
+    var res = _clip
+        .lookupFunction<load_model_request, load_model_request>(
+            "load_text_model")
         .call(modelPath.toNativeUtf8());
     return res.toDartString();
   }
@@ -92,13 +99,6 @@ class CLIP {
         .call(text.toNativeUtf8());
     return List<double>.from(
         jsonDecode(jsonDecode(res.toDartString())["embedding"]) as List);
-  }
-
-  static String runInference(String text) {
-    var res = _clip
-        .lookupFunction<inference_request, inference_request>("run_inference")
-        .call(text.toNativeUtf8());
-    return res.toDartString();
   }
 
   static double computeScore(
