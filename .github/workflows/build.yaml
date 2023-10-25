@@ -35,6 +35,9 @@ jobs:
           cmake ..
           cmake --build .  # Use CMake to build the project
           cd ../..
+      
+      - name: Rename artifact 
+        run: cp src/build/ggmlclip src/build/ggmlclip-${{ matrix.os }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
@@ -47,4 +50,3 @@ jobs:
         with:
             artifacts: "src/build/ggmlclip-${{ matrix.os }}"  # Include OS name here
             token: ${{ secrets.GITHUB_TOKEN }}
-            draft: true
