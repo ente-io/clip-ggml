@@ -2,7 +2,9 @@
 # installed. You should not increase this version, as doing so will cause
 # the plugin to fail to compile for some customers of the plugin.
 cmake_minimum_required(VERSION 3.10)
-
+# expriment: neeraj
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# expriment: neeraj
 project(clip_ggml_library VERSION 0.0.1 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 add_library(clip_ggml SHARED

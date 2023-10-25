@@ -1,0 +1,47 @@
+name: C++ Build
+
+on:
+  push:
+      tags:
+          - "v*" # Push events to matching v*, i.e. v4.2.0
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: actions-setup-cmake
+        uses: jwlawson/actions-setup-cmake@v1.14.1
+        with:
+          cmake-version: '3.22.x'
+
+      - name: Build C++ program
+        run: |
+          cd src
+          mkdir -p build
+          cd build
+          cmake ..
+          cmake --build .  # Use CMake to build the project
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ggmlclip-${{ matrix.os }}
+          path: src/build/ggmlclip*
+      
+      # Create a Github release
+      - uses: ncipollo/release-action@v1
+        with:
+            artifacts: |
+              ggmlclip-${{ matrix.os }}/*
+            token: ${{ secrets.GITHUB_TOKEN }}
