@@ -34,18 +34,15 @@ jobs:
           cd build
           cmake ..
           cmake --build .  # Use CMake to build the project
+          cd ../..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: ggmlclip-${{ matrix.os }}
           path: src/build/ggmlclip
-      
       # Create a Github release
-      - name: Create GitHub Release
-        if: steps.upload-artifact.outcome == 'success'
         uses: ncipollo/release-action@v1
         with:
-            artifacts: |
-              src/build/ggmlclip
+            artifacts: "src/build/ggmlclip"
             token: ${{ secrets.GITHUB_TOKEN }}
