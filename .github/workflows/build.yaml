@@ -43,7 +43,7 @@ jobs:
           path: src/build/ggmlclip
       
       # Create a Github release
-        uses: ncipollo/release-action@v1
+      - uses: ncipollo/release-action@v1
         with:
             artifacts: "src/build/ggmlclip"
             token: ${{ secrets.GITHUB_TOKEN }}
