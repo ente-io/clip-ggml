@@ -1,6 +1,8 @@
 name: C++ Build
 
 on:
+  workflow_dispatch:
+      # Enable manual run
   push:
       tags:
           - "v*" # Push events to matching v*, i.e. v4.2.0
@@ -12,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest]  
 
     steps:
       - name: Checkout repository
@@ -37,11 +39,13 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ggmlclip-${{ matrix.os }}
-          path: src/build/ggmlclip*
+          path: src/build/ggmlclip
       
       # Create a Github release
-      - uses: ncipollo/release-action@v1
+      - name: Create GitHub Release
+        if: steps.upload-artifact.outcome == 'success'
+        uses: ncipollo/release-action@v1
         with:
             artifacts: |
-              src/build/ggmlclip*
+              src/build/ggmlclip
             token: ${{ secrets.GITHUB_TOKEN }}
