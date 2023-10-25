@@ -50,3 +50,4 @@ jobs:
         with:
             artifacts: "src/build/ggmlclip-${{ matrix.os }}"  # Include OS name here
             token: ${{ secrets.GITHUB_TOKEN }}
+            allowUpdates: true
