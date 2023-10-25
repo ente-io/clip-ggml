@@ -27,9 +27,6 @@ struct clip_image_f32_batch make_clip_image_f32_batch(std::vector<clip_image_f32
   return batch;
 }
 
-char *model = "models/openai_clip-vit-base-patch32.ggmlv0.f16.bin";
-char *image_path = "models/red_apple.jpg";
-char *text = "an apple";
 char *image_load_failure = "Failed to load the image";
 char *image_preprocess_failure = "Failed to preprocess the image";
 char *image_encode_failure = "Failed to encode the image";
@@ -103,7 +100,7 @@ extern "C"
 
     if (!clip_image_load_from_file(dart_image_path, img0))
     {
-      fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, image_path);
+      fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, dart_image_path);
       return image_load_failure;
     }
 
@@ -129,7 +126,7 @@ extern "C"
     struct clip_image_u8 *img0 = make_clip_image_u8();
     if (!clip_image_load_from_file(dart_image_path, img0))
     {
-      fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, image_path);
+      fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, dart_image_path);
       return image_load_failure;
     }
 
@@ -318,7 +315,7 @@ int main(int argc, char **argv)
   struct clip_image_u8 *img0 = make_clip_image_u8();
   if (!clip_image_load_from_file(str_to_charp(params.image_path), img0))
   {
-    fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, image_path);
+    fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, params.image_path);
     return 0;
   }
   const int64_t image_preprocess = ggml_time_us();
