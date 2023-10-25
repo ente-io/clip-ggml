@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]  
+        os: [macos-latest, ubuntu-latest]  
 
     steps:
       - name: Checkout repository
@@ -45,5 +45,6 @@ jobs:
       # Create a Github release
       - uses: ncipollo/release-action@v1
         with:
-            artifacts: "src/build/ggmlclip"
+            artifacts: "src/build/ggmlclip-${{ matrix.os }}"  # Include OS name here
             token: ${{ secrets.GITHUB_TOKEN }}
+            draft: true
