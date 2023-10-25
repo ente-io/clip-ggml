@@ -43,5 +43,5 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
             artifacts: |
-              ggmlclip-${{ matrix.os }}/*
+              src/build/ggmlclip*
             token: ${{ secrets.GITHUB_TOKEN }}
