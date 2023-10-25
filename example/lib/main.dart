@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
 
     final path = await getAccessiblePathForAsset(modelPath, "model.bin");
     var startTime = DateTime.now();
-    clip.loadModel(path);
+    CLIP.loadImageModel(path);
     var endTime = DateTime.now();
     print("Loading model took: " +
         (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
@@ -47,38 +47,12 @@ class MyApp extends StatelessWidget {
     );
 
     final startTime = DateTime.now();
-    final imageEmbedding = clip.createImageEmbedding(imagePath);
+    final imageEmbedding = CLIP.createImageEmbedding(imagePath);
     final endTime = DateTime.now();
     print("Creating image embedding took: " +
         (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
             .toString() +
         "ms");
-
-    await runInference(clip, imageEmbedding, "cycle");
-    await runInference(clip, imageEmbedding, "red car");
-    await runInference(clip, imageEmbedding, "beach");
-    await runInference(clip, imageEmbedding, "grey cycle");
-    await runInference(clip, imageEmbedding, "beach");
-    await runInference(clip, imageEmbedding, "rockrider");
-  }
-
-  Future<void> runInference(
-      CLIP clip, String imageEmbedding, String textQuery) async {
-    final startTime = DateTime.now();
-    String textEmbedding = clip.createTextEmbedding(textQuery);
-    final endTime = DateTime.now();
-    print("Creating text embedding took: " +
-        (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
-            .toString() +
-        "ms");
-    final score = await computeScore(clip, imageEmbedding, textEmbedding);
-    print(textQuery +
-        " score: " +
-        score.toString() +
-        " (" +
-        (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
-            .toString() +
-        "ms)");
   }
 
   Future<double> computeScore(
@@ -88,7 +62,7 @@ class MyApp extends StatelessWidget {
         jsonDecode(jsonDecode(imageEmbedding)["embedding"]) as List);
     final txtEmbedding = List<double>.from(
         jsonDecode(jsonDecode(textEmbedding)["embedding"]) as List);
-    final score = clip.computeScore(imgEmbedding, txtEmbedding);
+    final score = CLIP.computeScore(imgEmbedding, txtEmbedding);
     final endTime = DateTime.now();
     print("Computing score took: " +
         (endTime.millisecondsSinceEpoch - startTime.millisecondsSinceEpoch)
