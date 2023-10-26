@@ -312,7 +312,7 @@ int main(int argc, char **argv)
   struct clip_image_u8 *img0 = make_clip_image_u8();
   if (!clip_image_load_from_file(str_to_charp(params.image_path), img0))
   {
-    fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, params.image_path);
+    fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, str_to_charp(params.image_path));
     return 1;
   }
 
