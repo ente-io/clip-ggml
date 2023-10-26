@@ -271,30 +271,43 @@ extern "C"
 int main(int argc, char **argv)
 {
   cli_params params;
+  struct clip_ctx *img_ctx;
+  struct clip_ctx *txt_ctx;
+
   if (!cli_params_parse(argc, argv, params))
   {
     print_help(argc, argv, params);
     return 0;
   }
-  auto img_ctx = clip_model_load(params.img_model.c_str(), params.verbose);
-  if (!img_ctx)
-  {
-    printf("%s: Unable  to load image model from %s", __func__, params.img_model.c_str());
-    return 1;
+
+  // Image model path is given
+  if (!params.img_model.empty()) {
+    img_ctx = clip_model_load(params.img_model.c_str(), params.verbose);
+    if (!img_ctx)
+    {
+      printf("%s: Unable  to load image model from %s", __func__, params.img_model.c_str());
+      return 1;
+    }
+  } else if (!params.txt_model.empty()) {
+    txt_ctx = clip_model_load(params.txt_model.c_str(), params.verbose);
+    if (!txt_ctx)
+    {
+      printf("%s: Unable  to load text model from %s", __func__, params.txt_model.c_str());
+      return 1;
+    }
   }
 
-  auto txt_ctx = clip_model_load(params.txt_model.c_str(), params.verbose);
-  if (!txt_ctx)
-  {
-    printf("%s: Unable  to load text model from %s", __func__, params.txt_model.c_str());
-    return 1;
-  }
-
+  // Text encoding 
   if (params.image_path.empty())
   {
+    if (!txt_ctx)
+    {
+      printf("%s: Text model not loaded %s", __func__, params.txt_model.c_str());
+      return 1;
+    }
     // Didn't call the above APIs since it requires a persistent ctx
     const char *text = params.text.c_str();
-    int vec_dim = clip_get_vision_hparams(img_ctx)->projection_dim;
+    int vec_dim = clip_get_text_hparams(txt_ctx)->projection_dim;
     clip_tokens tokens;
     clip_tokenize(txt_ctx, text, &tokens);
     float txt_vec[vec_dim];
@@ -305,30 +318,36 @@ int main(int argc, char **argv)
     }
     std::cout << arrayToArrayString(txt_vec, vec_dim);
     return 0;
-  }
+  } else {
+    // Image encoding
+    if (!img_ctx)
+    {
+      printf("%s: Image model not loaded %s", __func__, params.img_model.c_str());
+      return 1;
+    }
+    // Same for image
+    int vec_dim = clip_get_vision_hparams(img_ctx)->projection_dim;
+    struct clip_image_u8 *img0 = make_clip_image_u8();
+    if (!clip_image_load_from_file(str_to_charp(params.image_path), img0))
+    {
+      fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, str_to_charp(params.image_path));
+      return 1;
+    }
 
-  // Same for image
-  int vec_dim = clip_get_vision_hparams(img_ctx)->projection_dim;
-  struct clip_image_u8 *img0 = make_clip_image_u8();
-  if (!clip_image_load_from_file(str_to_charp(params.image_path), img0))
-  {
-    fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, str_to_charp(params.image_path));
-    return 1;
-  }
+    struct clip_image_f32 *img_res = make_clip_image_f32();
+    if (!clip_image_preprocess(img_ctx, img0, img_res))
+    {
+      fprintf(stderr, "%s: failed to preprocess image\n", __func__);
+      return 1;
+    }
 
-  struct clip_image_f32 *img_res = make_clip_image_f32();
-  if (!clip_image_preprocess(img_ctx, img0, img_res))
-  {
-    fprintf(stderr, "%s: failed to preprocess image\n", __func__);
-    return 1;
+    float img_vec[vec_dim];
+    if (!clip_image_encode(img_ctx, 4, img_res, img_vec, true))
+    {
+      fprintf(stderr, "%s: failed to encode image\n", __func__);
+      return 1;
+    }
+    std::cout << arrayToArrayString(img_vec, vec_dim);
+    return 0;
   }
-
-  float img_vec[vec_dim];
-  if (!clip_image_encode(img_ctx, 4, img_res, img_vec, true))
-  {
-    fprintf(stderr, "%s: failed to encode image\n", __func__);
-    return 1;
-  }
-  std::cout << arrayToArrayString(img_vec, vec_dim);
-  return 0;
 }

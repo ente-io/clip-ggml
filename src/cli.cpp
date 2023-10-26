@@ -5,8 +5,8 @@
 struct cli_params {
     int32_t n_threads = std::min(4, (int32_t)std::thread::hardware_concurrency());
 
-    std::string img_model = "models/clip-vit-base-patch32_ggml-vision-model-f16.gguf";
-    std::string txt_model = "models/clip-vit-base-patch32_ggml-text-model-f16.gguf";
+    std::string img_model;
+    std::string txt_model;
     std::string image_path;
     std::string text;
     int verbose = 1;
@@ -50,5 +50,6 @@ bool cli_params_parse(int argc, char ** argv, cli_params & params) {
             }
         }
     }
+
     return !(params.image_path.empty() && params.text.empty());
 }
