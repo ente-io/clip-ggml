@@ -274,7 +274,7 @@ int main(int argc, char **argv)
   if (!cli_params_parse(argc, argv, params))
   {
     print_help(argc, argv, params);
-    return 1;
+    return 0;
   }
   auto img_ctx = clip_model_load(params.img_model.c_str(), params.verbose);
   if (!img_ctx)
@@ -301,10 +301,10 @@ int main(int argc, char **argv)
     if (!clip_text_encode(txt_ctx, 4, &tokens, txt_vec, true))
     {
       fprintf(stderr, "%s: failed to encode text\n", __func__);
-      return 0;
+      return 1;
     }
     std::cout << arrayToArrayString(txt_vec, vec_dim);
-    return 1;
+    return 0;
   }
 
   // Same for image
@@ -313,22 +313,22 @@ int main(int argc, char **argv)
   if (!clip_image_load_from_file(str_to_charp(params.image_path), img0))
   {
     fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, params.image_path);
-    return 0;
+    return 1;
   }
 
   struct clip_image_f32 *img_res = make_clip_image_f32();
   if (!clip_image_preprocess(img_ctx, img0, img_res))
   {
     fprintf(stderr, "%s: failed to preprocess image\n", __func__);
-    return 0;
+    return 1;
   }
 
   float img_vec[vec_dim];
   if (!clip_image_encode(img_ctx, 4, img_res, img_vec, true))
   {
     fprintf(stderr, "%s: failed to encode image\n", __func__);
-    return 0;
+    return 1;
   }
   std::cout << arrayToArrayString(img_vec, vec_dim);
-  return 1;
+  return 0;
 }
