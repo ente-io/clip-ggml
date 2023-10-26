@@ -28,19 +28,19 @@ void print_help(int argc, char ** argv, cli_params & params) {
 bool cli_params_parse(int argc, char ** argv, cli_params & params) {
     for (int i = 0; i < argc; i++) {
         std::string arg = std::string(argv[i]);
-        if (arg == "-mv" || arg == "--modelvision") {
+        if (arg == "--modelvision") {
             params.img_model = argv[++i];
-        } else if (arg == "-mt" || arg == "--modeltext") {
+        } else if (arg == "--modeltext") {
             params.txt_model = argv[++i];
-        } else if (arg == "-t" || arg == "--threads") {
+        } else if (arg == "--threads") {
             params.n_threads = std::stoi(argv[++i]);
         } else if (arg == "--text") {
             params.text = argv[++i];
         } else if (arg == "--image") {
             params.image_path = argv[++i];
-        } else if (arg == "-v" || arg == "--verbose") {
+        } else if (arg == "--verbose") {
             params.verbose = std::stoi(argv[++i]);
-        } else if (arg == "-h" || arg == "--help") {
+        } else if (arg == "--help") {
             print_help(argc, argv, params);
             exit(0);
         } else {
