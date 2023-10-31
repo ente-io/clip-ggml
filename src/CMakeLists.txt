@@ -23,3 +23,6 @@ target_link_libraries(clip_ggml PRIVATE clip ggml ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(ggmlclip "clip_ggml.cpp")
 target_link_libraries(ggmlclip PRIVATE clip ggml)
+if (NOT APPLE)
+  target_link_libraries(ggmlclip PRIVATE -static)
+endif()
