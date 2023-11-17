@@ -87,6 +87,11 @@ extern "C"
     return str_to_charp("ok");
   }
 
+  char *ping(char *input)
+  {
+    return str_to_charp("pong");
+  }
+
   char *preprocess_image(char *dart_image_path)
   {
     if (!img_ctx)
@@ -281,14 +286,17 @@ int main(int argc, char **argv)
   }
 
   // Image model path is given
-  if (!params.img_model.empty()) {
+  if (!params.img_model.empty())
+  {
     img_ctx = clip_model_load(params.img_model.c_str(), params.verbose);
     if (!img_ctx)
     {
       printf("%s: Unable  to load image model from %s", __func__, params.img_model.c_str());
       return 1;
     }
-  } else if (!params.txt_model.empty()) {
+  }
+  else if (!params.txt_model.empty())
+  {
     txt_ctx = clip_model_load(params.txt_model.c_str(), params.verbose);
     if (!txt_ctx)
     {
@@ -297,7 +305,7 @@ int main(int argc, char **argv)
     }
   }
 
-  // Text encoding 
+  // Text encoding
   if (params.image_path.empty())
   {
     if (!txt_ctx)
@@ -318,7 +326,9 @@ int main(int argc, char **argv)
     }
     std::cout << arrayToArrayString(txt_vec, vec_dim);
     return 0;
-  } else {
+  }
+  else
+  {
     // Image encoding
     if (!img_ctx)
     {

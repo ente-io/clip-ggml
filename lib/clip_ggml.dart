@@ -28,6 +28,8 @@ typedef get_score_response = ffi.Pointer<Utf8> Function(
     ffi.Pointer<Utf8> text_embedding,
     int vec_dim);
 
+typedef ping_request = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> text);
+
 class CLIP {
   static const clipLib = "libclip_ggml.so";
 
@@ -98,6 +100,13 @@ class CLIP {
         .call(text.toNativeUtf8());
     return List<double>.from(
         jsonDecode(jsonDecode(res.toDartString())["embedding"]) as List);
+  }
+
+  static String ping(String text) {
+    final res = _clip
+        .lookupFunction<ping_request, ping_request>("ping")
+        .call(text.toNativeUtf8());
+    return res.toDartString();
   }
 
   static double computeScore(
