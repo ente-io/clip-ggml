@@ -7,6 +7,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # expriment: neeraj
 project(clip_ggml_library VERSION 0.0.1 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
+set(BUILD_SHARED_LIBS ON)
 add_library(clip_ggml SHARED
   "clip_ggml.cpp"
 )
