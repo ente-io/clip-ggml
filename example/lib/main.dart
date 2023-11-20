@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
   Future<void> loadAndRunModel() async {
     final clip = CLIP();
     const modelPath =
-        "assets/models/openai_clip-vit-base-patch32.ggmlv0.f16.bin";
+        "assets/models/clip-vit-base-patch32_ggml-vision-model-q4_0.gguf";
 
     final path = await getAccessiblePathForAsset(modelPath, "model.bin");
     var startTime = DateTime.now();
