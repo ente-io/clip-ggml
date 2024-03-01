@@ -47,6 +47,7 @@ class MyApp extends StatelessWidget {
     );
 
     final startTime = DateTime.now();
+    // ignore: unused_local_variable
     final imageEmbedding = CLIP.createImageEmbedding(imagePath);
     final endTime = DateTime.now();
     print("Creating image embedding took: " +
